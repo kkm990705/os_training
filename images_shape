@@ -1,0 +1,14 @@
+from PIL import Image
+import numpy as np
+import os
+
+# 이미지 크기 및 흑백인지 컬러인지 구분하는 코드
+
+image_path = 'C:/start/images/images/2695_CRS_01_03.jpg'
+
+# PIL Image를 numpy ndarray로 변환합니다.
+image = np.array(Image.open(image_path))
+
+print(f'이미지 높이',image.shape[0])
+print(f'이미지 넓이',image.shape[1])
+print(f'이미지 채널(컬러 = 3),(흑백 = 0)',image.shape[2])
