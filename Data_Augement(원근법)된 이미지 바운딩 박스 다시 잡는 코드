@@ -1,0 +1,89 @@
+import os
+import cv2
+import numpy as np
+
+# 경로 설정
+source_dir = '/content/drive/MyDrive/MASK_PJ/mask_data/val'
+images_folder = 'images'
+labels_folder = 'labels'
+
+# 원근법 변환을 위한 좌표 설정
+pts1 = np.float32([[500, 500], [500, 2500], [3500, 500], [3500, 2500]])  # 원근법 변환 전 좌표
+pts2 = np.float32([[1000, 1000], [1000, 2000], [3000, 1000], [3000, 2000]])  # 원근법 변환 후 좌표
+
+# 이미지 폴더 경로
+images_folder_path = os.path.join(source_dir, images_folder)
+
+# 이미지 폴더 내 파일 목록 가져오기
+image_files = os.listdir(images_folder_path)
+
+# 폴더 내 파일별로 원근법 변환 수행
+for image_file in image_files:
+    file_name, file_extension = os.path.splitext(image_file)
+
+    # 이미지 파일인 경우
+    if file_extension.lower() == '.jpg':
+        image_path = os.path.join(images_folder_path, image_file)
+        image = cv2.imread(image_path)
+        height, width = image.shape[:2]
+
+        # 원근법 변환
+        M = cv2.getPerspectiveTransform(pts1, pts2)
+        transformed_image = cv2.warpPerspective(image, M, (width, height))
+
+        # 새로운 이미지 파일명 생성
+        new_image_file = file_name + '_transformed' + file_extension
+        new_image_path = os.path.join(images_folder_path, new_image_file)
+
+        # 이미지 저장
+        cv2.imwrite(new_image_path, transformed_image)
+
+        # 라벨 파일 경로
+        labels_folder_path = os.path.join(source_dir, labels_folder)
+        label_file_path = os.path.join(labels_folder_path, file_name + '.txt')
+
+        # 라벨 파일이 존재하는 경우
+        if os.path.exists(label_file_path):
+            with open(label_file_path, 'r') as f:
+                lines = f.readlines()
+
+            # 라벨 데이터 원근법 변환 수행
+            new_label_lines = []
+            for line in lines:
+                line_data = line.strip().split(' ')
+                class_id = line_data[0]
+                bbox = list(map(float, line_data[1:]))
+
+                # 좌표를 절대 좌표로 변환
+                x_absolute = bbox[0] * width
+                y_absolute = bbox[1] * height
+                bbox_width_absolute = bbox[2] * width
+                bbox_height_absolute = bbox[3] * height
+
+                # 원근법 변환
+                src_points = np.float32([[x_absolute, y_absolute],
+                                        [x_absolute + bbox_width_absolute, y_absolute],
+                                        [x_absolute, y_absolute + bbox_height_absolute],
+                                        [x_absolute + bbox_width_absolute, y_absolute + bbox_height_absolute]])
+                dst_points = cv2.perspectiveTransform(src_points.reshape(-1, 1, 2), M)
+                transformed_bbox = cv2.boundingRect(dst_points)
+
+                # 상대 좌표로 변환된 bbox 정보
+                x_transformed = transformed_bbox[0] / width
+                y_transformed = transformed_bbox[1] / height
+                width_transformed = transformed_bbox[2] / width
+                height_transformed = transformed_bbox[3] / height
+
+                # 원근법 변환된 라벨 데이터 추가
+                new_label_line = f"{class_id} {x_transformed} {y_transformed} {width_transformed} {height_transformed}\n"
+                new_label_lines.append(new_label_line)
+
+            # 새로운 라벨 파일명 생성
+            new_label_file = file_name + '_transformed.txt'
+            new_label_path = os.path.join(labels_folder_path, new_label_file)
+
+            # 새로운 라벨 파일 저장
+            with open(new_label_path, 'w') as f:
+                f.writelines(new_label_lines)
+
+print('원근법 변환 완료.')
