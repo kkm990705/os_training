@@ -1,0 +1,21 @@
+import os
+import glob
+import shutil
+
+src_dir = r'C:\start\images'
+dest_dir = r'C:\start\images\images'
+os.makedirs(dest_dir, exist_ok=True)
+
+folders = [f.path for f in os.scandir(src_dir) if f.is_dir()]
+
+for folder in folders:
+    image_files = glob.glob(folder + '/*.*')
+
+    for image_file in image_files:
+        img_dest = os.path.join(dest_dir, os.path.basename(image_file))
+        shutil.move(image_file, img_dest)
+
+        if os.path.exists(img_dest):
+            print(f"Image {os.path.basename(image_file)} was successfully moved to the destination folder")
+        else:
+            print(f"Failed to move image {os.path.basename(image_file)} to the destination folder")
