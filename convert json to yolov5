@@ -1,0 +1,29 @@
+# 이미지 높이와 넓이에 맞춰서 함수에 넣어주면된다 다만 json 파일마다 공식이 다를수 있다
+
+def generate_yolo_label(i, yolo_class, image_width=4032, image_height=3024):
+    with open(i, 'r') as f:
+        data = json.load(f)
+
+    landmark_coordinates = data['figures'][0]['shape']['coordinates']
+    x_coordinates, y_coordinates = zip(*landmark_coordinates)
+
+    # 바운딩 박스의 좌표 계산
+    min_x = np.min(x_coordinates)
+    max_x = np.max(x_coordinates)
+    min_y = np.min(y_coordinates)
+    max_y = np.max(y_coordinates)
+
+    # 바운딩 박스의 중심 좌표 계산
+    box_width = max_x - min_x
+    box_height = max_y - min_y
+    center_x = (max_x + min_x) / 2
+    center_y = (max_y + min_y) / 2
+
+    # YOLO 라벨 형식으로 변환
+    yolo_x = center_x / image_width
+    yolo_y = center_y / image_height
+    yolo_width = box_width / image_width
+    yolo_height = box_height / image_height
+
+    # YOLO 라벨 출력
+    return f"{yolo_class} {yolo_x:.6f} {yolo_y:.6f} {yolo_width:.6f} {yolo_height:.6f}"
