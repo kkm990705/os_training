@@ -25,5 +25,34 @@ def generate_yolo_label(i, yolo_class, image_width=4032, image_height=3024):
     yolo_width = box_width / image_width
     yolo_height = box_height / image_height
 
+
+# json 파일 txt로 yolov5 형식에 맞게 변환후 내가 원하는 폴더에 넣기
+
+import numpy as np
+import json
+import glob
+import os
+import re
+
+base_dir = r'C:\start\labels\2699'
+output_dir = r'C:\start\labels\lab'
+os.makedirs(output_dir, exist_ok=True)
+
+json_file_list = glob.glob(base_dir + '/*.json')
+
+for json_src in json_file_list:
+    yolo_class = int(os.path.splitext(os.path.basename(json_src))[0][-1]) - 1
+    yolo_label = generate_yolo_label(json_src, yolo_class)
+    txt_dest = os.path.join(output_dir, os.path.splitext(os.path.basename(json_src))[0]) + '.txt'
+
+    with open(txt_dest, 'w') as f:
+        f.write("%s\n" % yolo_label)
+        f.close()
+
+    if os.path.exists(txt_dest):
+        print(f"JSON {os.path.basename(json_src)} was successfully converted to txt and saved in the output folder")
+    else:
+        print(f"Failed to convert JSON {os.path.basename(json_src)} to txt and save in the output folder")
+
     # YOLO 라벨 출력
     return f"{yolo_class} {yolo_x:.6f} {yolo_y:.6f} {yolo_width:.6f} {yolo_height:.6f}"
