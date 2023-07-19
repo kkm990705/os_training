@@ -1,0 +1,7 @@
+# yolov5형식으로 아직 변환되지 않은 bbox형태 보기 
+import json
+
+with open('C:\\start\\labels\\2695\\2695_CRS_01_03.json', 'r') as f:
+    json_data = json.load(f)
+    coordinates = json_data["figures"][0]["shape"]["coordinates"] # 0번 바운딩 박스 좌표 값 추출
+    print(coordinates)
